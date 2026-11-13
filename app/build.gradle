@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ir.mahdi.persiantts'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ir.mahdi.persiantts"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("TTS_KEYSTORE") ?: "../tts-release.jks")
+            storePassword System.getenv("TTS_KSPASS")
+            keyAlias System.getenv("TTS_KEYALIAS") ?: "tts"
+            keyPassword System.getenv("TTS_KSPASS")
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

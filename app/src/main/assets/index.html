@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Persian TTS</title>
+<link rel="stylesheet" href="font.css">
+<style>
+:root{
+  --bg:#FEF7FF; --head:#F3EDF7; --title:#100A14; --bar:#3F51B5;
+  --pill:#DCD3FB; --pill-txt:#2E2470;
+  --b1:#C9BCF9; --b1t:#2B2166; --b2:#6A55C9; --b3:#4A34C9;
+  --txt:#1B1B22; --muted:#6E6683; --hint:#6F6885; --line:#E2E2EA; --card:#FFFFFF;
+  --save:#6750A3; --link:#6750A3;
+  --ok:#0E7C3A; --err:#B3261E;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font-family:Vazirmatn,system-ui,sans-serif;font-size:15px;line-height:1.7}
+body{padding-bottom:26px}
+/* ---------- splash ---------- */
+#splash{position:fixed;inset:0;z-index:120;background:#fff;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  transition:opacity .45s ease}
+#splash.hide{opacity:0;pointer-events:none}
+#splash img{width:132px;height:132px;border-radius:30px;display:block;
+  box-shadow:0 10px 30px rgba(74,52,201,.22);
+  animation:pop .8s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes pop{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:scale(1)}}
+#splash .sname{font-size:33px;font-weight:800;letter-spacing:.5px;direction:ltr;
+  background:linear-gradient(90deg,#4A34C9 0%,#8E7BF2 50%,#C9BCF9 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  color:transparent;opacity:0;animation:fadeUp .9s ease .32s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#splash .sload{position:absolute;bottom:56px;width:54px;height:4px;border-radius:4px;
+  background:var(--line);overflow:hidden;opacity:0;animation:fadeUp .6s ease .5s both}
+#splash .sload i{display:block;height:100%;width:40%;border-radius:4px;
+  background:linear-gradient(90deg,#4A34C9,#C9BCF9);animation:run 1.1s ease-in-out infinite}
+@keyframes run{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
+body.booting{overflow:hidden}
+/* ---------- brand header ---------- */
+header.brand{background:var(--head);padding:14px 18px;display:flex;align-items:center;gap:12px}
+header.brand img{width:42px;height:42px;border-radius:12px;flex-shrink:0}
+header.brand .bname{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+header.brand .bname b{font-size:22px;font-weight:800;letter-spacing:-.2px;direction:ltr;
+  background:linear-gradient(90deg,#4A34C9,#8E7BF2 60%,#C9BCF9);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header.brand .bname small{color:var(--muted);font-size:12.5px}
+/* ---------- top bar ---------- */
+.bar{background:#3F51B5;color:#fff;display:flex;align-items:center;gap:12px;padding:12px 14px}
+.bar .ttl{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#menuBtn{background:none;border:0;padding:4px;cursor:pointer;flex-shrink:0}
+#menuBtn span{display:block;width:24px;height:3px;background:#fff;border-radius:2px;margin:5px 0}
+.langsw{margin-inline-start:auto;display:flex;gap:6px;flex-shrink:0}
+.lbtn{background:rgba(0,0,0,.30);color:#fff;border:1.5px solid rgba(255,255,255,.9);
+  border-radius:20px;padding:4px 11px;font-size:13px;font-weight:700;line-height:1.5;
+  display:inline-flex;align-items:center;gap:5px}
+.lbtn.on{background:#fff;color:var(--b3);border-color:#fff}
+main{padding:18px 16px;max-width:640px;margin:0 auto}
+label.fld{display:block;font-weight:700;font-size:15.5px;margin:16px 0 6px}
+select,textarea{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:12px;
+  padding:12px 12px;font-family:inherit;font-size:15px;color:var(--txt);appearance:none;
+  -webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236E6E7C' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:left 12px center}
+html[dir=ltr] select{background-position:right 12px center}
+select:focus,textarea:focus{outline:none;border-color:var(--bar)}
+textarea{min-height:130px;resize:none;line-height:1.9;background-image:none}
+.subhint{font-size:12.5px;color:var(--hint);margin:7px 2px 0;line-height:1.8;text-align:start}
+.btns{display:flex;gap:10px;margin-top:20px}
+button{font-family:inherit;cursor:pointer;border:0;border-radius:26px;font-size:15px;font-weight:700}
+.btn{padding:13px 20px;color:#fff}
+#btnSave{background:var(--b1);color:var(--b1t);padding:13px 14px}
+#btnStop{background:var(--b2);color:#fff;padding:13px 14px}
+#btnGo{background:var(--b3);flex:1.55;white-space:nowrap;padding:13px 10px;font-size:15px;
+  letter-spacing:0}
+button:active{filter:brightness(.93)}
+button:disabled{opacity:.55}
+#status{margin-top:14px;font-size:14px;min-height:22px;color:var(--muted);text-align:center}
+#status.err{color:var(--err)} #status.ok{color:var(--ok)}
+#histHead{display:flex;justify-content:space-between;align-items:center;margin-top:26px;
+  border-top:1.5px solid var(--line);padding-top:16px}
+#histHead b{font-size:17px}
+#histClear{background:#EFECFA;color:#3D3A8C;font-size:13px;font-weight:700;padding:7px 13px;
+  border-radius:18px}
+#histList{margin-top:6px}
+#histPager{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+#histPager button{background:#EFECFA;color:#3D3A8C;font-size:15px;padding:7px 13px;border-radius:18px}
+#histPager button:disabled{opacity:.4}
+#histPager select{width:auto;min-width:64px;padding:7px 10px}
+#histPage{font-size:13px;color:var(--muted);min-width:70px;text-align:center}
+.hitem .hmv{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.hitem .hmv button{background:#EFECFA;color:#3D3A8C;width:30px;height:17px;border-radius:7px;font-size:10px;line-height:1;padding:0}
+.hitem .hmv button:disabled{opacity:.3}
+.hitem{background:var(--card);border-radius:12px;padding:10px 12px;margin-top:9px;cursor:pointer;
+  display:flex;justify-content:space-between;gap:10px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.hitem .hcol{flex:1;min-width:0}
+.hitem .ht{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hitem .hm{font-size:12px;color:var(--muted);direction:ltr;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;text-align:start}
+.hitem .hdel{background:#FBE9E7;color:#B3261E;border:1px solid #EFC4BE;border-radius:11px;
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;line-height:1;flex-shrink:0}
+.hitem .hdel:active{background:#F6D7D3}
+.hempty{color:var(--muted);font-size:14px;text-align:center;padding:14px}
+#rights{margin-top:30px;padding-top:16px;border-top:1.5px solid var(--line);
+  text-align:center;color:#6B6382;font-size:13px;line-height:1.9;font-weight:500}
+/* overlay / drawer */
+#overlay{position:fixed;inset:0;background:rgba(10,10,25,.55);display:none;z-index:40}
+#drawer{position:fixed;top:0;bottom:0;left:0;right:0;width:80%;max-width:430px;background:#F6F5FB;
+  z-index:50;transform:translateX(105%);transition:transform .25s ease;border-radius:18px 0 0 18px;
+  padding:26px 18px;overflow-y:auto;box-shadow:-6px 0 26px rgba(0,0,0,.25)}
+html[dir=ltr] #drawer{border-radius:0 18px 18px 0;transform:translateX(-105%)}
+#drawer.open{transform:translateX(0)}
+html[dir=ltr] #drawer.open{transform:translateX(0)}
+#overlay.show{display:block}
+.dpill{display:block;width:100%;text-align:center;background:var(--pill);color:var(--pill-txt);
+  border-radius:26px;padding:13px;font-weight:700;font-size:16px;margin-bottom:18px}
+.ditem{display:block;width:100%;text-align:start;background:none;color:#12121A;font-size:16.5px;
+  font-weight:700;padding:13px 10px;border-bottom:1px solid var(--line);border-radius:0}
+.ditem.on{color:#2E2470;background:#EFECFA;border-radius:12px}
+.dhead{display:flex;align-items:center;gap:11px;margin-bottom:20px;padding-bottom:16px;
+  border-bottom:1.5px solid var(--line)}
+.dhead img{width:44px;height:44px;border-radius:13px;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(74,52,201,.18)}
+.dhead .dnm{display:flex;flex-direction:column;line-height:1.35;min-width:0;flex:1}
+.dhead .dnm b{font-size:16.5px;font-weight:800;direction:ltr;text-align:start;
+  background:linear-gradient(90deg,#4A34C9,#8E7BF2);-webkit-background-clip:text;
+  background-clip:text;-webkit-text-fill-color:transparent}
+.dhead .dnm small{font-size:11.5px;color:var(--muted);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.dclose{background:#EAE6F6;color:#4A4450;width:34px;height:34px;border-radius:50%;
+  font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-weight:400}
+.dclose:active{background:#DED8F0}
+.dfoot{margin-top:auto;padding-top:22px;text-align:center;font-size:11.5px;color:var(--hint);
+  direction:ltr}
+#drawer{display:flex;flex-direction:column}
+/* screens */
+.screen{display:none} .screen.active{display:block}
+.apiH{font-size:19px;font-weight:800;color:#4A4450;margin:20px 0 2px}
+.hint2{font-size:13.5px;color:var(--hint);margin:2px 0 4px;line-height:1.8}
+.krow2{display:flex;align-items:center;gap:8px;margin-top:16px}
+.kin{flex:1;min-width:0;border:0;border-bottom:1.5px solid #2A2430;background:transparent;
+  padding:7px 2px;font-family:inherit;font-size:14.5px;color:var(--txt);
+  direction:ltr;text-align:left;border-radius:0;-webkit-appearance:none}
+.kin:focus{outline:none;border-bottom-color:var(--save)}
+.kx{background:none;border:0;font-size:19px;line-height:1;color:#787179;padding:4px 6px;cursor:pointer;flex-shrink:0}
+.bigSave{display:block;width:100%;margin-top:26px;background:var(--save);color:#fff;
+  border-radius:30px;padding:15px;font-size:17px;font-weight:700}
+#saveMsg{text-align:center;color:var(--hint);font-size:14px;margin-top:12px;min-height:20px}
+#saveMsg.ok{color:var(--ok)} #saveMsg.bad{color:var(--err)}
+.stl{flex:1;min-width:0;font-size:14.5px;color:var(--txt)}
+.stv{font-size:14px;font-weight:700;color:var(--hint);flex-shrink:0}
+.stv.ok{color:var(--ok)} .stv.bad{color:var(--err)}
+.stv.ok::before{content:'\2713\00a0'} .stv.bad::before{content:'\2717\00a0'}
+.hint{font-size:13.5px;color:var(--muted);margin:6px 0 4px;line-height:1.8}
+#keyList{margin-top:10px}
+.krow{display:flex;justify-content:space-between;gap:8px;align-items:center;background:var(--card);
+  border-radius:10px;padding:8px 12px;margin-top:7px;font-size:13.5px;direction:ltr}
+audio{width:100%;margin-top:14px;display:none}
+/* guide / about */
+.gtext{font-size:14.5px;line-height:2}
+.gtext h3{font-size:16px;margin:18px 0 6px;color:#3A3170}
+.gtext ul{margin:4px 0;padding-inline-start:20px}
+.gtext li{margin:6px 0;padding-inline-start:2px}
+.gtext li b{color:#2E2470}
+.gtext .note{background:#F1EEFB;border-radius:12px;padding:10px 12px;font-size:13.5px;
+  color:#4A4450;margin-top:12px}
+.me-card{background:var(--card);border-radius:16px;padding:22px 16px;text-align:center;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);margin-top:14px}
+.me-card img{width:96px;height:96px;border-radius:24px;display:block;margin:0 auto 14px;
+  box-shadow:0 6px 18px rgba(74,52,201,.2)}
+.me-card .mn{font-size:20px;font-weight:800;color:#241C4A;margin-bottom:2px}
+.me-card .mr{font-size:13px;color:var(--muted);margin-bottom:16px}
+.me-row{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 0;
+  border-top:1px solid var(--line)}
+.me-row .lb{font-size:12.5px;color:var(--muted)}
+.me-row a,.me-row .vl{font-size:15px;font-weight:700;color:var(--link);text-decoration:none;
+  direction:ltr;word-break:break-all}
+.me-sign{margin-top:18px;text-align:center;font-size:13px;color:var(--hint);line-height:1.9}
+.setList{background:var(--card);border-radius:16px;padding:6px 16px}
+.setList .me-row{border-top:0}
+.setList .vl{color:#241C4A}
+</style>
+</head>
+<body class="booting">
+
+<!-- ============ SPLASH ============ -->
+<div id="splash">
+  <img src="logo.png" alt="Persian TTS">
+  <div class="sname">Persian tts</div>
+  <div class="sload"><i></i></div>
+</div>
+
+<header class="brand">
+  <img src="logo.png" alt="Persian TTS">
+  <div class="bname">
+    <b>Persian tts</b>
+    <small id="brandSub">تبدیل متن به صوت فارسی</small>
+  </div>
+</header>
+<div class="bar">
+  <button id="menuBtn" aria-label="menu"><span></span><span></span><span></span></button>
+  <div class="ttl" id="barTitle">تبدیل متن به صوت</div>
+  <div class="langsw">
+    <button class="lbtn on" id="lbFa" data-ui="fa" type="button">فا</button>
+    <button class="lbtn" id="lbEn" data-ui="en" type="button">EN</button>
+  </div>
+</div>
+
+<main>
+<!-- ============ SCREEN: HOME ============ -->
+<section class="screen active" id="scrHome">
+  <label class="fld" for="selLang" id="lblLang">زبان</label>
+  <select id="selLang"></select>
+  <div class="subhint" id="langHint"></div>
+
+  <label class="fld" for="selModel" id="lblModel">مدل</label>
+  <select id="selModel"></select>
+
+  <label class="fld" for="selVoice" id="lblVoice">صدا</label>
+  <select id="selVoice"></select>
+  <div class="subhint" id="voiceHint"></div>
+
+  <label class="fld" for="txtIn" id="lblText">متن</label>
+  <textarea id="txtIn" placeholder=""></textarea>
+
+  <div class="btns">
+    <button class="btn" id="btnGo"></button>
+    <button class="btn" id="btnStop"></button>
+    <button class="btn" id="btnSave"></button>
+  </div>
+
+  <div id="status"></div>
+  <audio id="player" controls></audio>
+
+  <div id="histHead"><b id="histTitle">تاریخچه</b><button id="histClear">پاک کردن</button></div>
+  <div id="histList"></div>
+  <div id="histPager"><button id="hpPrev" type="button">‹</button><span id="histPage"></span><button id="hpNext" type="button">›</button><select id="hpSize"></select></div>
+  <div id="rights"></div>
+</section>
+
+<!-- ============ SCREEN: SERVICE STATUS ============ -->
+<section class="screen" id="scrStatus">
+  <div class="hint2" id="stHint"></div>
+  <div id="stRows"></div>
+  <button class="bigSave" id="btnStCheck" type="button">بررسی اتصال</button>
+  <div id="saveMsg"></div>
+</section>
+
+<!-- ============ SCREEN: GUIDE ============ -->
+<section class="screen" id="scrGuide">
+  <div class="gtext" id="guideBody"></div>
+</section>
+
+<!-- ============ SCREEN: SETTINGS ============ -->
+<section class="screen" id="scrSettings">
+  <div class="hint2" id="setHint"></div>
+  <div class="setList">
+    <div class="me-row">
+      <span class="lb" id="setVerLb">نسخه برنامه</span>
+      <span class="vl" id="setVer">1.0</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN: ABOUT ============ -->
+<section class="screen" id="scrAbout">
+  <div class="me-card">
+    <img src="logo.png" alt="Persian TTS">
+    <div class="mn" id="aboutName">مهدی عرب سرخی</div>
+    <div class="mr" id="aboutRole">سازنده و توسعه‌دهنده</div>
+    <div class="me-row">
+      <span class="lb" id="aboutEmailLb">ایمیل</span>
+      <a class="vl" id="aboutEmail" href="#">mobil121382@gmail.com</a>
+    </div>
+    <div class="me-row">
+      <span class="lb" id="aboutSiteLb">وب‌سایت</span>
+      <a class="vl" id="aboutSite" href="#">mahdiarabsorkhi.ir</a>
+    </div>
+  </div>
+  <div class="me-sign" id="aboutSign"></div>
+</section>
+</main>
+
+<!-- ============ DRAWER ============ -->
+<div id="overlay"></div>
+<nav id="drawer">
+  <div class="dhead">
+    <img src="logo.png" alt="">
+    <div class="dnm"><b>Persian tts</b><small id="drawerSub">سازنده: مهدی عرب سرخی</small></div>
+    <button class="dclose" id="dClose" aria-label="close">&times;</button>
+  </div>
+  <button class="dpill" data-go="scrHome" id="dHome">تبدیل متن به صوت</button>
+  <button class="ditem" data-go="scrGuide" id="dGuide">راهنمای کامل</button>
+  <button class="ditem" data-go="scrStatus" id="dStatus">وضعیت سرویس</button>
+  <button class="ditem" data-go="scrSettings" id="dSet">تنظیمات</button>
+  <button class="ditem" data-go="scrAbout" id="dAbout">اطلاعات سازنده</button>
+  <div class="dfoot">Persian tts &middot; v1.0</div>
+</nav>
+
+<script src="voices-data.js"></script>
+<script>
+'use strict';
+/* ================= i18n ================= */
+const I18N={
+ fa:{
+  dir:'rtl', brandSub:'تبدیل متن به صوت فارسی', title:'تبدیل متن به صوت',
+  menu:'منو', lLang:'زبان', lModel:'مدل', lVoice:'صدا', lText:'متن',
+  auto:'خودکار (تشخیص از متن)', autoHint:'در حالت خودکار، زبان متن تشخیص داده می‌شود.',
+  autoEdgeHint:'حالت خودکار: برای Edge TTS فقط جنسیت صدا را انتخاب کنید؛ برنامه بر اساس متن، بهترین صدا را خودش برمی‌دارد.',
+  edgeOnlyML:'حالت خودکار برای Edge TTS: جنسیت را انتخاب کنید.',
+  male:'مرد', female:'زن', neutral:'بی‌طرف', multi:'چندزبانه',
+  noVoice:'— صدایی برای این زبان در این مدل نیست —',
+  noVoiceHint:'برای این مدل صدایی پیدا نشد — مدل دیگری را امتحان کنید.',
+  th:'عنوان (کاربردی)', thEng:'نام (قالب)', thAccent:'عنوان (تأکیدی)', thLight:'نام (سبک)',
+  phText:'متن خود را اینجا بنویسید…',
+  save:'ذخیره', stop:'توقف', go:'تبدیل و پخش',
+  pageOf:'صفحه {p} از {n}', perPage:'تعداد در هر صفحه', up:'بالا', dn:'پایین',
+  hist:'تاریخچه', clear:'پاک کردن', histEmpty:'هنوز چیزی ذخیره نشده',
+  del:'حذف', delOne:'حذف از تاریخچه',
+  converted:'در حال تبدیل...', chunkN:'در حال تبدیل... بخش {i} از {n}',
+  played:'پخش شد ✓', stopped:'متوقف شد.', needText:'متن را وارد کنید.',
+  histPlay:'پخش تاریخچه ✓', rebuild:'صوت ذخیره‌نشده — در حال بازسازی...',
+  needFirst:'ابتدا متنی را تبدیل کنید.', savedDl:'در Downloads ذخیره شد ✓',
+  saveErr:'خطا در ذخیره‌سازی', saved:"ذخیره شد ✓", deleted:'از تاریخچه حذف شد ✓',
+  cleared:'تاریخچه پاک شد ✓',
+  busyFb:'سهمیه این مدل تمام شد.',
+  errQuota:'سهمیه {model} تمام شد.',
+  errBusy:'Gemini موقتاً شلوغ است — کمی بعد تلاش کنید.',
+  errNet:'اینترنت وصل نیست.',
+  errTimeout:'اتصال قطع شد — دوباره تلاش کنید.',
+  errSrv:'سرویس صدا در دسترس نیست.',
+  errEdge:'ساخت صدا با Edge ممکن نشد.',
+  errText:'متن را وارد کنید.',
+  errLong:'متن خیلی بلند است.',
+  netErr:'اتصال به سرویس صدا برقرار نشد — اینترنت خود را بررسی کنید.',
+  srvErr:'سرویس صدا در دسترس نیست — کمی بعد دوباره تلاش کنید.',
+  stH:'وضعیت سرویس',
+  stHint:'برنامه از سرویس داخلی استفاده می‌کند و نیازی به کلید API نیست.',
+  stCheck:'بررسی اتصال', stChecking:'در حال بررسی…',
+  stOk:'سرویس در دسترس است', stBad:'سرویس در دسترس نیست', stDone:'✓ بررسی انجام شد — سرویس در دسترس است', stDoneBad:'✗ بررسی انجام شد — سرویس پاسخ نداد',
+  stRowConn:'اتصال به سرویس', stRowConv:'موتور تبدیل', stRowGem:'موتور Gemini',
+  stYes:'فعال', stNo:'غیرفعال', stMs:'{ms} میلی‌ثانیه', stFail:'ناموفق',
+  stRowLat:'زمان پاسخ',
+  gemVoiceGroup:'صداهای Gemini',
+  multiHint:'۳۰ صدای Gemini چندزبانه‌اند و برای این زبان هم کار می‌کنند.',
+  verH:'نسخه برنامه',
+  setH:'تنظیمات', setHint:'درباره برنامه',
+  guideH:'راهنمای کامل', aboutH:'اطلاعات سازنده',
+  aboutRole:'سازنده و توسعه‌دهنده', email:'ایمیل', site:'وب‌سایت',
+  aboutSign:'Persian TTS — ساخته‌شده با ❤ برای کاربران فارسی‌زبان',
+  rights:'تمام حقوق این برنامه متعلق به سازنده آن مهدی عرب سرخی است',
+  guide:`<h3>۱) این برنامه چه می‌کند؟</h3>
+   متن فارسی یا هر زبان دیگر را به فایل صوتی تبدیل می‌کند، آن را پخش، ذخیره و در تاریخچه نگه می‌دارد.
+   <h3>۲) پیش‌نیاز</h3>
+   برنامه دو موتور صدا دارد:
+   <ul>
+    <li><b>Edge TTS (رایگان):</b> آماده است و نیاز به تنظیم ندارد.</li>
+    <li><b>Gemini TTS:</b> کار می‌کند بدون هیچ تنظیمی؛ کلیدها سمت سرور هستند و شما نیازی به وارد کردن کلید ندارید.</li>
+   </ul>
+   <h3>۳) مراحل کار</h3>
+   <ul>
+    <li><b>زبان:</b> بالای فیلد مدل. پیش‌فرض «خودکار» است و زبان متن را خودش تشخیص می‌دهد. با انتخاب یک زبان مشخص، فقط صداهای همان زبان نمایش داده می‌شود.</li>
+    <li><b>مدل:</b> ابتدا «Edge TTS» را امتحان کنید (رایگان و سریع). برای کیفیت طبیعی‌تر و پادکستی، مدل‌های Gemini را انتخاب کنید.</li>
+    <li><b>صدا:</b> در حالت خودکار و موتور Edge فقط «مرد» یا «زن» را انتخاب می‌کنید و برنامه بر اساس متن، بهترین صدا را برمی‌دارد. در Gemini فهرست کامل صداها با کاربرد هر صدا نمایش داده می‌شود.</li>
+    <li><b>متن:</b> متن دلخواه را بنویسید و «تبدیل و پخش» را بزنید. متن‌های بلند خودکار به بخش‌های کوچک‌تر تقسیم و سپس یکپارچه می‌شوند.</li>
+    <li><b>ذخیره:</b> فایل صوتی با فرمت MP3/WAV در پوشه <code>Downloads/PersianTTS</code> ذخیره می‌شود.</li>
+    <li><b>تاریخچه:</b> هر صوت ساخته‌شده در فهرست می‌ماند. با زدن روی هر آیتم پخش می‌شود و با دکمه «حذف» همان آیتم، هم رکورد و هم فایل صوتی آن از حافظه برنامه پاک می‌شود.</li>
+    <li><b>توقف:</b> هر زمان تبدیل یا پخش در جریان باشد، دکمه «توقف» آن را متوقف می‌کند.</li>
+   </ul>
+   <h3>۴) تغییر زبان برنامه</h3>
+   در بالای صفحه، بغل عنوان، دو آیکون «فا» و «EN» هست. با زدن «EN» کل متن‌های برنامه انگلیسی و چیدمان چپ‌به‌راست می‌شود؛ با «فا» به فارسی و راست‌به‌چپ برمی‌گردد.
+   <div class="note">نکته‌ها: متن‌های شما نزد ما ذخیره نمی‌شوند و مستقیم به سرویس صدا فرستاده می‌شوند. این برنامه هیچ کلید API روی دستگاه شما نگه نمی‌دارد؛ اگر اتصال برقرار نشد، از منو «وضعیت سرویس» را بررسی کنید.</div>`,
+  guideBody:''
+ },
+ en:{
+  dir:'ltr', brandSub:'Persian text to speech', title:'Text to Speech',
+  menu:'Menu', lLang:'Language', lModel:'Model', lVoice:'Voice', lText:'Text',
+  auto:'Auto (detect from text)', autoHint:'In auto mode the language is detected from your text.',
+  autoEdgeHint:'Auto mode: with Edge TTS just pick a gender — the app selects the best voice for your text.',
+  edgeOnlyML:'Auto mode for Edge TTS: choose a gender.',
+  male:'Male', female:'Female', neutral:'Neutral', multi:'Multilingual',
+  noVoice:'— No voice for this language in this model —',
+  noVoiceHint:'No voice found for this model — try another model.',
+  th:'Title (expressive)', thEng:'Name (studio)', thAccent:'Title (accent)', thLight:'Name (light)',
+  phText:'Write your text here…',
+  save:'Save', stop:'Stop', go:'Convert & Play',
+  pageOf:'Page {p} of {n}', perPage:'Items per page', up:'Move up', dn:'Move down',
+  hist:'History', clear:'Clear all', histEmpty:'Nothing saved yet',
+  del:'Delete', delOne:'Delete from history',
+  converted:'Converting…', chunkN:'Converting… part {i} of {n}',
+  played:'Playing ✓', stopped:'Stopped.', needText:'Please enter some text.',
+  histPlay:'Playing from history ✓', rebuild:'Audio not saved — rebuilding…',
+  needFirst:'Convert some text first.', savedDl:'Saved to Downloads ✓',
+  saveErr:'Saving failed', saved:'Saved ✓', deleted:'Removed from history ✓',
+  cleared:'History cleared ✓',
+  busyFb:'This model is out of quota.',
+  errQuota:'{model} is out of quota.',
+  errBusy:'Gemini is busy right now — try again shortly.',
+  errNet:'No internet connection.',
+  errTimeout:'Connection dropped — please try again.',
+  errSrv:'The voice service is unavailable.',
+  errEdge:'Edge could not generate the audio.',
+  errText:'Please enter some text.',
+  errLong:'The text is too long.',
+  netErr:'Could not reach the voice service — check your internet connection.',
+  srvErr:'The voice service is unavailable — please try again shortly.',
+  stH:'Service Status',
+  stHint:'This app uses a built-in service. No API key is needed.',
+  stCheck:'Check connection', stChecking:'Checking…',
+  stOk:'Service is reachable', stBad:'Service is unreachable', stDone:'✓ Check complete — service is reachable', stDoneBad:'✗ Check complete — service did not respond',
+  stRowConn:'Service connection', stRowConv:'Conversion engine', stRowGem:'Gemini engine',
+  stYes:'Active', stNo:'Inactive', stMs:'{ms} ms', stFail:'Failed',
+  stRowLat:'Response time',
+  gemVoiceGroup:'Gemini voices',
+  multiHint:'The 30 Gemini voices are multilingual and work for this language too.',
+  verH:'App version',
+  setH:'Settings', setHint:'About this app',
+  guideH:'Full Guide', aboutH:'Developer Info',
+  aboutRole:'Developer & Author', email:'Email', site:'Website',
+  aboutSign:'Persian TTS — made with ❤ for Persian speakers',
+  rights:'All rights to this app belong to its developer, Mahdi Arabsorkhi.',
+  guide:`<h3>1) What does this app do?</h3>
+   It turns Persian (or any language) text into audio, plays it, saves it and keeps a history list.
+   <h3>2) Requirements</h3>
+   The app ships with two voice engines:
+   <ul>
+    <li><b>Edge TTS (free):</b> ready to use, no setup needed.</li>
+    <li><b>Gemini TTS:</b> works with no setup — the keys live on the server, so you never enter an API key.</li>
+   </ul>
+   <h3>3) How to use</h3>
+   <ul>
+    <li><b>Language:</b> sits above the model field. Default is “Auto”, which detects the language from your text. If you pick a specific language, only that language’s voices are listed.</li>
+    <li><b>Model:</b> start with “Edge TTS” (free and fast). Choose a Gemini model for a more natural, podcast-like voice.</li>
+    <li><b>Voice:</b> in Auto mode with Edge TTS you only choose Male or Female and the app picks the best voice for your text. Gemini models show the full voice list with each voice’s purpose.</li>
+    <li><b>Text:</b> type your text and press “Convert &amp; Play”. Long texts are split into chunks and merged back into one file.</li>
+    <li><b>Save:</b> the audio is written to <code>Downloads/PersianTTS</code> as MP3/WAV.</li>
+    <li><b>History:</b> every generated voice stays in the list. Tap an item to play it, or press its Delete button to remove both the entry and its audio file from the app storage.</li>
+    <li><b>Stop:</b> cancels an in-progress conversion or playback at any time.</li>
+   </ul>
+   <h3>4) Changing the app language</h3>
+   Next to the title at the top there are two buttons, “فا” and “EN”. Pressing “EN” switches the whole interface to English (left-to-right); pressing “فا” switches back to Persian (right-to-left).
+   <div class="note">Notes: your text is never stored on our servers — it is sent straight to the speech service. This app keeps no API key on your device; if the connection fails, open “Service Status” from the menu.</div>`,
+  guideBody:''
+ }
+};
+let UI='fa';
+function t(k,v){
+  let s=(I18N[UI]&&I18N[UI][k])||I18N.fa[k]||k;
+  if(v) for(const p in v) s=s.split('{'+p+'}').join(v[p]);
+  return s;
+}
+
+/* ================= config ================= */
+const MODELS=[
+ {id:'gemini-3.8-flash-tts',       fa:'Gemini 3.8 Flash (جدید)',   en:'Gemini 3.8 Flash (New)',    list:'g30', fmt:'wav'},
+ {id:'gemini-3.8-flash-lite-tts',  fa:'Gemini 3.8 Flash Lite',     en:'Gemini 3.8 Flash Lite',     list:'g30', fmt:'wav'},
+ {id:'gemini-3.1-flash-tts-preview', fa:'Gemini 3.1 Flash',        en:'Gemini 3.1 Flash',          list:'g30',  fmt:'pcm'},
+ {id:'gemini-2.5-flash-preview-tts', fa:'Gemini 2.5 Flash',        en:'Gemini 2.5 Flash',          list:'g30',  fmt:'pcm'},
+ {id:'edge', fa:'Edge TTS (رایگان)', en:'Edge TTS (Free)',          list:'edge', fmt:'mp3'}
+];
+/* app version - read from the native bridge when running inside the APK,
+   so build.gradle stays the single source of truth (falls back to APP_VERSION) */
+const APP_VERSION='1.0';
+function appVersion(){
+  try{ const v=BR&&BR.appVersion?BR.appVersion():''; return v||APP_VERSION; }
+  catch(e){ return APP_VERSION; }
+}
+const API_BASE='https://your-backend.example.com'; // your own TTS backend, see README
+/* service-side handle (NOT a provider API key) */
+const API_TOKEN='YOUR_APP_TOKEN'; // set your own backend token before building
+const TOK_M='__male__', TOK_F='__female__';
+
+/* ================= storage ================= */
+const BR=window.Android||null;
+const Store={
+  get(k,d){ try{ const s=BR?BR.loadPref(k):localStorage.getItem(k);
+      const v=s?JSON.parse(s):null; return v===null?d:v; }catch(e){ return d; } },
+  set(k,v){ try{ const s=JSON.stringify(v);
+      BR?BR.savePref(k,s):localStorage.setItem(k,s); }catch(e){} }
+};
+const state={
+  model:Store.get('model',MODELS[0].id),
+  voice:Store.get('voice','achird'),
+  lang:Store.get('lang','auto'),
+  uilang:Store.get('uilang','fa'),
+  history:Store.get('history',[]),
+  hpage:1,
+  hsize:Store.get('hsize',10)
+};
+if(![10,20,50,100].includes(state.hsize)) state.hsize=10;
+UI=(state.uilang==='en')?'en':'fa';
+let abort=null, curAudio=null, lastSaved=null, playingId=null;
+
+/* ================= helpers ================= */
+const $=id=>document.getElementById(id);
+function setStatus(txt,cls){ const s=$('status'); s.textContent=txt; s.className=cls||''; }
+function modelDef(id){ return MODELS.find(m=>m.id===id)||MODELS[0]; }
+function normalize(t2){ return (t2||'').replace(/\s+/g,' ').trim(); }
+function genderFa(g){
+  const m={m:'male',f:'female',n:'neutral',M:'male',F:'female',N:'neutral'};
+  return t(m[g]||'neutral');
+}
+function cap(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
+const _dnLang={}, _dnReg={};
+function langName(code,ui){
+  const base=(code||'').split('-')[0];
+  const reg=(code||'').split('-')[1];
+  if(ui==='fa'){
+    if(LANG_FA[code]) return LANG_FA[code];
+    try{
+      const dn=_dnLang.fa||(_dnLang.fa=new Intl.DisplayNames(['fa'],{type:'language'}));
+      const n=dn.of(base); if(n) return reg?n+' ('+reg+')':n;
+    }catch(e){}
+    return code;
+  }
+  try{
+    const dn=_dnLang.en||(_dnLang.en=new Intl.DisplayNames(['en'],{type:'language'}));
+    let n=dn.of(base); if(n) n=cap(n); else n=code;
+    if(reg&&base!=='und') return n+' ('+reg+')';
+    return n;
+  }catch(e){ return code; }
+}
+function allLangs(){
+  const s=new Set();
+  VOICES.edge.forEach(v=>{ if(v.l) s.add(v.l); });
+  VOICES.gall.forEach(v=>{ if(v.l) s.add(v.l); });
+  const a=[...s];
+  a.sort((x,y)=>{
+    const r=c=>c==='fa-IR'?0:(c==='en-US'?1:(c.startsWith('en')?2:3));
+    if(r(x)!==r(y)) return r(x)-r(y);
+    return x.localeCompare(y);
+  });
+  return a;
+}
+
+/* ================= text language detection ================= */
+const LAT_HINT={
+ 'de-DE':/[äöüß]|\b(und|der|die|das|nicht|ist|ich|mit|für|auf|ein|eine|auch|dass|werden|sind|von|zu)\b/i,
+ 'fr-FR':/[àâçéèêëîïôûùœ]|\b(le|la|les|des|une|est|et|nous|vous|avec|pour|dans|sur|pas|que|qui|plus)\b/i,
+ 'es-ES':/[ñ¿¡]|\b(el|la|los|las|una|es|que|con|para|por|pero|como|más|está|este|muy)\b/i,
+ 'pt-BR':/[ãõçâê]|\b(não|uma|que|com|para|por|está|mais|você|como|muito|também)\b/i,
+ 'it-IT':/\b(il|lo|la|gli|una|che|con|per|non|sono|questo|anche|più|molto|della)\b/i,
+ 'tr-TR':/[ığşçöü]|\b(ve|bir|bu|için|ile|değil|çok|olarak|daha|ama)\b/i,
+ 'nl-NL':/\b(de|het|een|niet|van|met|voor|dat|zijn|ook|maar|meer)\b/i,
+ 'pl-PL':/[ąćęłńóśźż]|\b(i|nie|jest|się|na|z|do|to|tak|jak|ale|bardzo)\b/i,
+ 'id-ID':/\b(yang|dan|tidak|dengan|untuk|ini|itu|adalah|dari|akan|saya)\b/i,
+ 'vi-VN':/[ăâđêôơư]|\b(và|của|không|là|được|trong|với|cho|người|này)\b/i,
+ 'ru-RU':/\b(и|не|в|на|что|это|я|он|она|как|для|все|был)\b/i,
+ 'en-US':/\b(the|and|is|are|of|to|in|that|it|for|with|you|this|not|have|will)\b/i
+};
+function detectLang(txt){
+  const s=txt||'';
+  let fa=0,ar=0,cyr=0,han=0,kana=0,hg=0,dev=0,he=0,gr=0,th=0,latin=0;
+  for(let i=0;i<s.length;i++){
+    const c=s.charCodeAt(i);
+    if(c>=0x0600&&c<=0x06FF){
+      if('پچژگکی'.indexOf(s[i])>=0) fa++; else if('ءآأإئييك'.indexOf(s[i])>=0) ar++; else fa++;
+    }
+    else if(c>=0x0400&&c<=0x04FF) cyr++;
+    else if((c>=0x4E00&&c<=0x9FFF)||(c>=0x3400&&c<=0x4DBF)) han++;
+    else if((c>=0x3040&&c<=0x30FF)) kana++;
+    else if(c>=0xAC00&&c<=0xD7AF) hg++;
+    else if(c>=0x0900&&c<=0x097F) dev++;
+    else if(c>=0x0590&&c<=0x05FF) he++;
+    else if(c>=0x0370&&c<=0x03FF) gr++;
+    else if(c>=0x0E00&&c<=0x0E7F) th++;
+    else if((c>=65&&c<=90)||(c>=97&&c<=122)||(c>=0xC0&&c<=0x24F)) latin++;
+  }
+  if(kana>0) return 'ja-JP';
+  if(hg>0) return 'ko-KR';
+  if(han>0) return 'zh-CN';
+  if(fa>0) return 'fa-IR';
+  if(cyr>0) return 'ru-RU';
+  if(dev>0) return 'hi-IN';
+  if(he>0) return 'he-IL';
+  if(gr>0) return 'el-GR';
+  if(th>0) return 'th-TH';
+  if(ar>0) return 'ar-EG';
+  if(latin>0){
+    const words=s.toLowerCase();
+    let best='en-US', bestN=0;
+    for(const k in LAT_HINT){
+      const m=words.match(new RegExp(LAT_HINT[k].source,'gi'));
+      const n=m?m.length:0;
+      if(n>bestN){ bestN=n; best=k; }
+    }
+    return best;
+  }
+  return '';
+}
+
+/* ================= voice lists ================= */
+const PREF_F=['Dilara','Aria','Ava','Emma','Jenny','Sonia','Michelle','Ana','Elvira','Clara',
+  'Emily','Amber','Ashley','Cora','Nora','Zariyah','Salma','Leyla','Yasmin','Katja','Serena','Libby'];
+const PREF_M=['Farid','Guy','Andrew','Brian','Christopher','Eric','Roger','Steffan','Ryan',
+  'Thomas','William','Connor','Dmitry','Prabhat','Omid','Hamed','Shakir','Bashkar','Elliot','Jason'];
+function edgeByLang(l){ return VOICES.edge.filter(v=>v.l===l); }
+function bestEdgeVoice(lang,gender){
+  let cand=edgeByLang(lang);
+  if(!cand.length && lang!=='en-US') cand=edgeByLang('en-US');
+  if(!cand.length) return null;
+  const want=(gender==='m')?'M':'F';
+  let same=cand.filter(v=>v.g===want);
+  const pool=same.length?same:cand;
+  const pref=(gender==='m')?PREF_M:PREF_F;
+  let best=null,bestScore=1e9;
+  pool.forEach(v=>{
+    let s=pref.indexOf(v.n.replace(/Neural$/,''));
+    if(s<0) s=200+ (/(Multilingual|Neural)/.test(v.i)?0:50);
+    if(bestScore>s){ bestScore=s; best=v; }
+  });
+  return best?best.i:pool[0].i;
+}
+function voiceOptions(){
+  const md=modelDef(state.model), lang=state.lang, out=[];
+  if(md.list==='edge'){
+    if(lang==='auto'){
+      out.push({txt:t('male'),  val:TOK_M});
+      out.push({txt:t('female'),val:TOK_F});
+    }else{
+      const vs=edgeByLang(lang);
+      [['F',t('female')],['M',t('male')]].forEach(([g,lb])=>{
+        const sub=vs.filter(v=>v.g===g);
+        if(!sub.length) return;
+        out.push({label:lb});
+        sub.forEach(v=>out.push({g:lang,txt:v.n,val:v.i}));
+      });
+      vs.filter(v=>v.g!=='M'&&v.g!=='F').forEach(v=>out.push({g:lang,txt:v.n,val:v.i}));
+    }
+    return out;
+  }
+  // Gemini: exactly 30 prebuilt voices (verified against the API's own allowed
+  // list, Google's docs table, and a 30/30 fa-IR synthesis probe). They are
+  // multilingual, so the same list serves every language - no per-language
+  // filtering, which is what used to leave this dropdown empty.
+  const g=VOICES.g30;
+  if(!g.length) return [{txt:t('noVoice'),val:'',dis:true}];
+  out.push({label:t('gemVoiceGroup')+' ('+g.length+')'});
+  g.forEach(v=>out.push({g:null,txt:(UI==='en'
+      ? `${genderFa(v.g)} — ${v.n} (${v.pe||v.p})`
+      : `${genderFa(v.g)} — ${v.pn||v.n} (${v.p})`),val:v.i}));
+  return out;
+}
+function defaultVoice(){
+  const md=modelDef(state.model);
+  if(md.list==='edge') return state.lang==='auto'?TOK_F:'fa-IR-DilaraNeural';
+  return 'achird';
+}
+function renderVoices(keep){
+  const sel=$('selVoice'), opts=voiceOptions();
+  sel.innerHTML='';
+  let grp=null;
+  opts.forEach(o=>{
+    if(o.label!==undefined && o.txt===undefined){
+      grp=document.createElement('optgroup'); grp.label=o.label; sel.appendChild(grp);
+    }else{
+      const el=document.createElement('option');
+      el.value=o.val||''; el.textContent=o.txt; if(o.dis) el.disabled=true;
+      (grp||sel).appendChild(el);
+    }
+  });
+  const want=(keep||state.voice);
+  const valid=[...sel.options].some(o=>o.value===want&&!o.disabled);
+  if(valid) sel.value=want;
+  else{
+    const first=[...sel.options].find(o=>!o.disabled);
+    if(first) sel.value=first.value;
+  }
+  state.voice=sel.value||'';
+  Store.set('voice',state.voice);
+  voiceHint();
+}
+function voiceHint(){
+  const md=modelDef(state.model), out=[];
+  if(md.list==='edge'&&state.lang==='auto') out.push(t('autoEdgeHint'));
+  else if(state.lang!=='auto'&&!$('selVoice').options.length) out.push(t('noVoiceHint'));
+  else if(md.list!=='edge') out.push(t('multiHint'));
+  $('voiceHint').textContent=out.join(' ');
+}
+function renderModels(){
+  const sel=$('selModel'); sel.innerHTML='';
+  MODELS.forEach(m=>{ const o=document.createElement('option');
+    o.value=m.id; o.textContent=(UI==='en'?m.en:m.fa); sel.appendChild(o); });
+  sel.value=state.model;
+}
+function renderLangs(){
+  const sel=$('selLang'); sel.innerHTML='';
+  const o0=document.createElement('option'); o0.value='auto'; o0.textContent=t('auto');
+  sel.appendChild(o0);
+  const grp=document.createElement('optgroup'); grp.label='—';
+  allLangs().forEach(c=>{ const o=document.createElement('option');
+    o.value=c; o.textContent=langName(c,UI); grp.appendChild(o); });
+  sel.appendChild(grp);
+  sel.value=state.lang;
+  const has=[...sel.options].some(o=>o.value===state.lang);
+  if(!has){ state.lang='auto'; sel.value='auto'; }
+  $('langHint').textContent=t('autoHint');
+}
+
+/* ================= audio utils ================= */
+function u32(n){ return [n&255,(n>>8)&255,(n>>16)&255,(n>>>24)&255]; }
+function wavWrap(pcm){
+  const h=[0x52,0x49,0x46,0x46,...u32(36+pcm.length),0x57,0x41,0x56,0x45,
+    0x66,0x6d,0x74,0x20,...u32(16),0x01,0x00,0x01,0x00,...u32(24000),...u32(48000),
+    0x02,0x00,0x10,0x00,0x64,0x61,0x74,0x61,...u32(pcm.length)];
+  const out=new Uint8Array(h.length+pcm.length);
+  out.set(h,0); out.set(pcm,h.length); return out;
+}
+function wavData(u8){
+  if(!(u8.length>44 && u8[0]===0x52&&u8[1]===0x49&&u8[2]===0x46&&u8[3]===0x46)) return u8;
+  let pos=12;
+  while(pos+8<=u8.length){
+    const id=String.fromCharCode(u8[pos],u8[pos+1],u8[pos+2],u8[pos+3]);
+    const size=u8[pos+4]|(u8[pos+5]<<8)|(u8[pos+6]<<16)|(u8[pos+7]<<24);
+    if(id==='data') return u8.subarray(pos+8,Math.min(u8.length,pos+8+size));
+    pos+=8+size+(size&1);
+  }
+  return u8;
+}
+function concat(chunks){
+  let n=0; chunks.forEach(c=>n+=c.length);
+  const out=new Uint8Array(n); let p=0;
+  chunks.forEach(c=>{ out.set(c,p); p+=c.length; });
+  return out;
+}
+function splitText(t2,n){
+  t2=(t2||'').trim(); if(!t2) return [];
+  const parts=t2.split(/(?<=[.!؟?…\n])\s+/);
+  const out=[]; let cur='';
+  parts.forEach(p=>{
+    while(p.length>n){ if(cur){out.push(cur);cur='';} out.push(p.slice(0,n)); p=p.slice(n); }
+    if((cur+' '+p).trim().length>n){ out.push(cur); cur=p; }
+    else cur=(cur?cur+' ':'')+p;
+  });
+  if(cur.trim()) out.push(cur);
+  return out.filter(x=>x.trim());
+}
+function b64ToU8(b64){ const bin=atob(b64); const u=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+function u8ToB64(u){ let s=''; const CH=0x8000;
+  for(let i=0;i<u.length;i+=CH) s+=String.fromCharCode.apply(null,u.subarray(i,i+CH));
+  return btoa(s); }
+
+/* ================= API calls (through the internal proxy) ================= */
+// raised for every failure; message is ALWAYS short + localized (never raw provider text)
+class AppErr extends Error{
+  constructor(msg,appMsg){ super(msg); this.appMsg = appMsg!==false; }  // appMsg=true => already localized
+}
+function ttsFetch(body,signal){
+  return fetch(API_BASE+'/v1/audio/speech',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-App-Token':API_TOKEN},
+    body:JSON.stringify(body),signal});
+}
+/* ---- per-attempt watchdog: a stalled mobile connection must never hang the UI ---- */
+const STALL_MS=45000;               // no answer for this long => abandon attempt
+                                    // (a 300-char chunk normally takes 8-17s)
+function withStall(p,signal,ms){
+  return new Promise((resolve,reject)=>{
+    let done=false;
+    const tm=setTimeout(()=>{
+      if(done) return;
+      done=true;
+      reject(new AppErr(t('errTimeout')));
+    }, ms||STALL_MS);
+    if(signal){
+      try{ signal.addEventListener('abort',()=>{
+        if(done) return; done=true; clearTimeout(tm); reject(new DOMException('aborted','AbortError'));
+      },{once:true}); }catch(e){}
+    }
+    p.then(v=>{ if(done) return; done=true; clearTimeout(tm); resolve(v); },
+           e=>{ if(done) return; done=true; clearTimeout(tm); reject(e); });
+  });
+}
+/* one retry per request: mobile paths drop the odd connection / go silent briefly.
+   A stall is retried ONCE, then reported. User cancels are never retried. */
+async function ttsRequest(body,signal,ms){
+  const stallMs=ms||STALL_MS;
+  for(let attempt=0;attempt<2;attempt++){
+    if(signal&&signal.aborted) throw new DOMException('aborted','AbortError');
+    const inner=new AbortController();
+    let fwd=null;
+    if(signal){ fwd=()=>{ try{ inner.abort(); }catch(e){} };
+      if(signal.aborted) inner.abort();
+      else signal.addEventListener('abort',fwd,{once:true}); }
+    try{
+      const res=await withStall(ttsFetch(body,inner.signal),signal,stallMs);
+      return {res,inner,fwd};
+    }catch(e){
+      if(fwd){ try{ signal.removeEventListener('abort',fwd); }catch(x){} }
+      try{ inner.abort(); }catch(x){}
+      if(e&&e.name==='AbortError') throw e;
+      if(signal&&signal.aborted) throw new DOMException('aborted','AbortError');
+      // a silent stall already burned the full watchdog window: report it now
+      if(e instanceof AppErr) throw e;
+      if(attempt===0){ await new Promise(r=>setTimeout(r,700)); continue; }
+      throw e;
+    }
+  }
+}
+function proxyErr(e){
+  if(e && e.name==='AbortError') return e;
+  return new AppErr(t('errNet'));
+}
+// turn any provider/server failure into ONE short sentence in the UI language
+function modelLabel(md){
+  if(!md) return 'Gemini';
+  // short label for messages: drop the "(New)/(جدید)" marketing suffix
+  return ((UI==='en' ? (md.en||md.id) : (md.fa||md.id)) || 'Gemini')
+    .replace(/\s*\([^)]*\)\s*$/,'').trim();
+}
+function errMessage(status,body,md){
+  const b=String(body||'');
+  if(status===503||status===429||/quota|exhaust|RESOURCE_EXHAUSTED/i.test(b))
+    return t('errQuota',{model:modelLabel(md)});
+  if(status===401||status===403) return t('errSrv');
+  if(status===0) return t('errNet');
+  if(status>=500) return t('errSrv');
+  if(status===400) return t('errBusy');
+  return t('errSrv');
+}
+async function geminiCall(md,voice,text,signal){
+  let out;
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      out=await ttsRequest({backend:'gemini',model:md.id,voice,text},signal);
+    }catch(e){
+      if(e instanceof AppErr) throw e;
+      throw proxyErr(e);
+    }
+    const res=out.res;
+    // 502/503/504 come from the CDN giving up on a slow origin: one silent
+    // retry usually succeeds. Never retry a real model/quota error.
+    if(res.status>=502&&res.status<=504&&attempt===0){
+      if(signal&&signal.aborted) throw new DOMException('aborted','AbortError');
+      await new Promise(r=>setTimeout(r,900));
+      continue;
+    }
+    if(!res.ok){
+      let msg=''; try{ msg=(await res.text()).slice(0,300); }catch(e){}
+      // all server-side keys for THIS model are exhausted: no fallback, report it
+      throw new AppErr(errMessage(res.status,msg,md));
+    }
+    let u8;
+    try{ u8=new Uint8Array(await withStall(res.arrayBuffer(),signal)); }
+    catch(e){
+      if(e instanceof AppErr) throw e;
+      throw new AppErr(t('errTimeout'));
+    }
+    if(!u8.length) throw new AppErr(t('srvErr'));
+    const isWav=u8[0]===0x52&&u8[1]===0x49;
+    return {u8, mime: isWav?'audio/wav':'audio/L16'};
+  }
+  throw new AppErr(t('errSrv'));
+}
+async function edgeCall(voice,text,signal){
+  let out;
+  try{
+    out=await ttsRequest({backend:'edge',voice,text},signal);
+  }catch(e){
+    if(e instanceof AppErr) throw e;
+    throw proxyErr(e);
+  }
+  const res=out.res;
+  if(!res.ok){
+    throw new AppErr(t('errEdge'));
+  }
+  let u8;
+  try{ u8=new Uint8Array(await withStall(res.arrayBuffer(),signal)); }
+  catch(e){
+    if(e instanceof AppErr) throw e;
+    throw new AppErr(t('errTimeout'));
+  }
+  if(!u8.length) throw new AppErr(t('srvErr'));
+  return u8;
+}
+async function pingProxy(attempt){
+  attempt=attempt||0;
+  const ctrl=new AbortController();
+  // the request travels CDN edge -> Iran origin -> tunnel -> backend; a cold
+  // path can take several seconds, so allow 25s before giving up
+  const tm=setTimeout(()=>ctrl.abort(),25000);
+  const t0=Date.now();
+  try{
+    const r=await fetch(API_BASE+'/health',{signal:ctrl.signal,cache:'no-store'});
+    clearTimeout(tm);
+    if(!r.ok){
+      if(!r.status||r.status>=500){ if(attempt<1) return pingProxy(attempt+1); }
+      return {ok:false,code:r.status,ms:Date.now()-t0};
+    }
+    const j=await r.json().catch(()=>null);
+    return {ok:!!(j&&j.ok),code:r.status,ms:Date.now()-t0,
+      keys:j?j.gemini_keys:0,edge:j?!!j.edge:false};
+  }catch(e){
+    clearTimeout(tm);
+    // one retry: first hit on a cold path often pays TLS + CDN handshake
+    if(attempt<1) return pingProxy(attempt+1);
+    return {ok:false,code:0,ms:Date.now()-t0,err:(e&&e.name)||'err'};
+  }
+}
+function resolveVoice(md,sel,text){
+  if(md.list!=='edge') return sel;
+  if(sel!==TOK_M && sel!==TOK_F) return sel;
+  const lang=state.lang==='auto' ? (detectLang(text)||'fa-IR') : state.lang;
+  const g=(sel===TOK_M)?'m':'f';
+  const v=bestEdgeVoice(lang,g);
+  return v||(g==='m'?'fa-IR-FaridNeural':'fa-IR-DilaraNeural');
+}
+async function synthesize(md,voice,text,signal,onProgress){
+  // 300-char max per Gemini call: measured ~12s/chunk, safely under the CDN's
+  // 60s origin timeout (400+ chars was observed spiking to 46s)
+  const chunks=splitText(text, md.list==='edge'?600:300);
+  const got=[];
+  for(let i=0;i<chunks.length;i++){
+    if(onProgress) onProgress(i+1,chunks.length);
+    if(md.list==='edge'){
+      got.push(await edgeCall(voice,chunks[i],signal));
+    }else{
+      const r=await geminiCall(md,voice,chunks[i],signal);
+      const isWav=r.u8[0]===0x52&&r.u8[1]===0x49;
+      got.push(isWav?wavData(r.u8):r.u8);
+    }
+  }
+  const merged=concat(got);
+  if(md.list==='edge') return {bytes:merged,mime:'audio/mpeg',ext:'mp3'};
+  return {bytes:wavWrap(merged),mime:'audio/wav',ext:'wav'};
+}
+
+/* ================= convert & play ================= */
+async function convertAndPlay(){
+  const text=$('txtIn').value;
+  if(!normalize(text)){ setStatus(t('needText'),'err'); return; }
+  let md=modelDef(state.model);
+  let voice=resolveVoice(md,$('selVoice').value,text);
+  abort=new AbortController();
+  $('btnGo').disabled=true; $('btnStop').disabled=false;
+  setStatus(t('converted'));
+  const prog=(i,n)=>setStatus(n>1?t('chunkN',{i,n}):t('converted'));
+  try{
+    // NO automatic Edge fallback: if every key of the selected model is out of
+    // quota, tell the user exactly that (in the app language) and stop.
+    const r=await synthesize(md,voice,text,abort.signal,prog);
+    const blob=new Blob([r.bytes],{type:r.mime});
+    if(curAudio) URL.revokeObjectURL(curAudio);
+    curAudio=URL.createObjectURL(blob);
+    const au=$('player'); au.style.display='block'; au.src=curAudio;
+    try{ await au.play(); }catch(e){}
+    lastSaved={b64:u8ToB64(r.bytes),mime:r.mime,ext:r.ext,voice};
+    setStatus(t('played'),'ok');
+    await addHistory(text,voice,md,blob);
+  }catch(e){
+    if(e&&e.name==='AbortError'){ setStatus(t('stopped')); }
+    else{
+      // short, localized, no provider internals
+      const m=(e instanceof AppErr && e.appMsg)?e.message:t('errSrv');
+      setStatus(m,'err');
+    }
+  }finally{
+    $('btnGo').disabled=false; $('btnStop').disabled=true; abort=null;
+  }
+}
+
+/* ================= history ================= */
+function voiceNameOf(md,voice){
+  try{
+    if(md.list==='g30'){ const v=VOICES.g30.find(x=>x.i===voice); return v?v.n:null; }
+    if(md.list==='gall'){ const v=VOICES.gall.find(x=>x.i===voice); return v?v.n:null; }
+    const v=VOICES.edge.find(x=>x.i===voice); return v?v.n:null;
+  }catch(e){ return null; }
+}
+async function addHistory(text,voice,md,blob){
+  const norm=normalize(text);
+  const dup=state.history.findIndex(h=>normalize(h.text)===norm);
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const ts=`${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const vname=(voiceNameOf(md,voice)||voice);
+  let file='';
+  if(BR && blob){
+    try{ file=BR.saveAudio('h_'+Date.now()+'.'+(md.list==='edge'?'mp3':'wav'),
+        u8ToB64(new Uint8Array(await blob.arrayBuffer()))); }catch(e){ file=''; }
+  }
+  const entry={id:dup>=0?state.history[dup].id:Date.now()+'', text, voice, vname, ts,
+    model:md.id, file};
+  if(dup>=0) state.history.splice(dup,1);
+  state.history.unshift(entry);
+  state.hpage=1;
+  Store.set('history',state.history);
+  renderHistory();
+}
+const nd=n=>UI==='en'?String(n):String(n).replace(/\d/g,c=>'۰۱۲۳۴۵۶۷۸۹'[c]);
+function moveHistory(h,d){
+  const i=state.history.indexOf(h), j=i+d;
+  if(j<0||j>=state.history.length) return;
+  state.history.splice(i,1); state.history.splice(j,0,h);
+  Store.set('history',state.history); renderHistory();
+}
+function renderHistory(){
+  const box=$('histList'); box.innerHTML='';
+  const all=state.history, sz=state.hsize, pages=Math.max(1,Math.ceil(all.length/sz));
+  state.hpage=Math.min(Math.max(1,state.hpage),pages);
+  $('histPager').style.display=all.length?'flex':'none';
+  const sel=$('hpSize'); sel.title=t('perPage'); sel.setAttribute('aria-label',t('perPage'));
+  sel.innerHTML=[10,20,50,100].map(n=>`<option value="${n}"${n===sz?' selected':''}>${nd(n)}</option>`).join('');
+  $('histPage').textContent=t('pageOf',{p:nd(state.hpage),n:nd(pages)});
+  $('hpPrev').disabled=state.hpage<=1; $('hpNext').disabled=state.hpage>=pages;
+  if(!all.length){
+    const d=document.createElement('div'); d.className='hempty'; d.textContent=t('histEmpty');
+    box.appendChild(d); return;
+  }
+  const start=(state.hpage-1)*sz;
+  all.slice(start,start+sz).forEach((h,k)=>{
+    const gi=start+k;
+    const d=document.createElement('div'); d.className='hitem';
+    const col=document.createElement('div'); col.className='hcol';
+    const tx=document.createElement('div'); tx.className='ht'; tx.textContent=h.text;
+    const m=document.createElement('div'); m.className='hm';
+    m.textContent=(h.vname||h.voice)+' • '+h.ts;
+    col.appendChild(tx); col.appendChild(m);
+    const mv=document.createElement('div'); mv.className='hmv';
+    [['▲',-1,'up',gi===0],['▼',1,'dn',gi===all.length-1]].forEach(([ch,dir,key,off])=>{
+      const b=document.createElement('button'); b.type='button'; b.textContent=ch; b.disabled=off;
+      b.title=t(key); b.setAttribute('aria-label',t(key));
+      b.onclick=ev=>{ ev.stopPropagation(); moveHistory(h,dir); };
+      mv.appendChild(b);
+    });
+    const del=document.createElement('button');
+    del.className='hdel'; del.type='button'; del.textContent='✕';
+    del.title=t('delOne'); del.setAttribute('aria-label',t('delOne'));
+    del.onclick=ev=>{ ev.stopPropagation(); deleteHistory(h); };
+    d.appendChild(col); d.appendChild(mv); d.appendChild(del);
+    d.onclick=()=>playHistory(h);
+    box.appendChild(d);
+  });
+}
+function deleteHistory(h){
+  // if this entry is the one currently playing, stop it first so no ghost audio remains
+  try{
+    const au=$('player'), src=au.getAttribute('src')||'';
+    if(curAudio && src && curAudio===src && !au.paused){ au.pause(); au.removeAttribute('src'); au.load(); }
+  }catch(e){}
+  if(BR && h.file){ try{ BR.deleteAudio(h.file); }catch(e){} }
+  state.history=state.history.filter(x=>x!==h);
+  Store.set('history',state.history);
+  renderHistory();
+  setStatus(t('deleted'),'ok');
+}
+async function playHistory(h){
+  $('txtIn').value=h.text;
+  const md=MODELS.find(m=>m.id===h.model)||MODELS[0];
+  if(md){ state.model=md.id; $('selModel').value=md.id; }
+  renderVoices(h.voice);
+  let url=null;
+  if(BR&&h.file){
+    try{
+      const b64=BR.readAudio?BR.readAudio(h.file):'';
+      if(b64) url=URL.createObjectURL(new Blob([b64ToU8(b64)],
+        {type:/\.mp3$/.test(h.file)?'audio/mpeg':'audio/wav'}));
+    }catch(e){ url=null; }
+    if(!url){ try{ const p=BR.audioUrl(h.file); if(p) url=p; }catch(e){} }
+  }
+  if(url){
+    if(curAudio){ try{ URL.revokeObjectURL(curAudio); }catch(e){} }
+    curAudio=url; const au=$('player'); au.style.display='block'; au.src=url;
+    try{ await au.play(); }catch(e){}
+    setStatus(t('histPlay'),'ok');
+  }else{
+    setStatus(t('rebuild'));
+    await convertAndPlay();
+  }
+}
+
+/* ================= actions ================= */
+async function doSave(){
+  if(!lastSaved){ setStatus(t('needFirst'),'err'); return; }
+  const nm='tts_'+Date.now()+'.'+lastSaved.ext;
+  if(BR){
+    const p=BR.saveFile(nm,lastSaved.mime,lastSaved.b64);
+    setStatus(p?t('savedDl'):t('saveErr'),p?'ok':'err');
+  }else{
+    const u=URL.createObjectURL(new Blob([b64ToU8(lastSaved.b64)],{type:lastSaved.mime}));
+    const a=document.createElement('a'); a.href=u; a.download=nm; a.click();
+    setStatus(t('saved'),'ok');
+  }
+}
+function doStop(){
+  if(abort){ abort.abort(); }
+  $('player').pause();
+}
+
+/* ================= ui language / screens ================= */
+function applyUI(){
+  document.documentElement.lang = UI==='en'?'en':'fa';
+  document.documentElement.dir  = UI==='en'?'ltr':'rtl';
+  $('lbFa').classList.toggle('on',UI!=='en');
+  $('lbEn').classList.toggle('on',UI==='en');
+  $('brandSub').textContent=t('brandSub');
+  $('menuBtn').setAttribute('aria-label',t('menu'));
+  document.title='Persian TTS';
+  $('barTitle').textContent=t('title');
+  $('lblLang').textContent=t('lLang');
+  $('lblModel').textContent=t('lModel');
+  $('lblVoice').textContent=t('lVoice');
+  $('lblText').textContent=t('lText');
+  $('txtIn').placeholder=t('phText');
+  $('btnSave').textContent=t('save');
+  $('btnStop').textContent=t('stop');
+  $('btnGo').textContent=t('go');
+  $('histTitle').textContent=t('hist');
+  $('histClear').textContent=t('clear');
+  $('rights').textContent=t('rights');
+  $('guideBody').innerHTML=t('guide');
+  $('aboutRole').textContent=t('aboutRole');
+  $('aboutName').textContent=(UI==='en'?'Mahdi Arabsorkhi':'مهدی عرب سرخی');
+  $('aboutEmailLb').textContent=t('email');
+  $('aboutSiteLb').textContent=t('site');
+  $('aboutSign').textContent=t('aboutSign');
+  $('dHome').textContent=t('title');
+  $('dGuide').textContent=t('guideH');
+  $('dStatus').textContent=t('stH');
+  $('dSet').textContent=t('setH');
+  $('dAbout').textContent=t('aboutH');
+  $('setHint').textContent=t('setHint');
+  $('setVerLb').textContent=t('verH');
+  $('setVer').textContent=appVersion();
+  $('drawerSub').textContent=(UI==='en'?'by Mahdi Arabsorkhi':'سازنده: مهدی عرب سرخی');
+  const df=document.querySelector('#drawer .dfoot');
+  if(df) df.innerHTML='Persian tts &middot; v'+appVersion();
+  applyStatusLabels();
+  renderLangs(); renderModels(); renderVoices(); renderHistory();
+  const cur=document.querySelector('.screen.active');
+  barTitleFor(cur?cur.id:'scrHome');
+}
+function barTitleFor(id){
+  const map={scrHome:t('title'),scrStatus:t('stH'),scrSettings:t('setH'),
+    scrGuide:t('guideH'),scrAbout:t('aboutH')};
+  $('barTitle').textContent=map[id]||t('title');
+}
+function openDrawer(){ $('drawer').classList.add('open'); $('overlay').classList.add('show'); }
+function closeDrawer(){
+  const d=$('drawer');
+  d.classList.remove('open'); $('overlay').classList.remove('show');
+  // settle the slide-in transition immediately so layout readers (and the
+  // native back-gesture) never observe a half-way RTL transform
+  if(d){ const t=d.style.transition; d.style.transition='none'; void d.offsetWidth;
+          d.style.transition=t||''; }
+}
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
+  document.querySelectorAll('.ditem,.dpill').forEach(b=>b.classList.toggle('on',b.dataset.go===id));
+  barTitleFor(id);
+  closeDrawer(); window.scrollTo(0,0);
+  if(id==='scrStatus') renderStatus();
+}
+window.handleBack=function(){
+  if($('drawer').classList.contains('open')){ closeDrawer(); return true; }
+  const cur=document.querySelector('.screen.active');
+  if(cur && cur.id!=='scrHome'){ show('scrHome'); return true; }
+  return false;
+};
+
+/* ================= service status screen ================= */
+function stRow(lb,val,cls){
+  const row=document.createElement('div'); row.className='krow2';
+  const l=document.createElement('div'); l.className='stl'; l.textContent=lb;
+  const v=document.createElement('div'); v.className='stv'+(cls?(' '+cls):''); v.textContent=val;
+  row.appendChild(l); row.appendChild(v); return row;
+}
+function applyStatusLabels(){
+  const hi=$('stHint'), b=$('btnStCheck');
+  if(hi) hi.textContent=t('stHint');
+  if(b) b.textContent=t('stCheck');
+}
+function renderStatus(){ applyStatusLabels(); }
+async function checkStatus(){
+  const btn=$('btnStCheck'), msg=$('saveMsg'), box=$('stRows');
+  if(!btn||!box) return;
+  btn.disabled=true; msg.className=''; msg.textContent=t('stChecking');
+  box.innerHTML='';
+  const r=await pingProxy();
+  box.appendChild(stRow(t('stRowConn'),
+    r.ok?t('stOk'):t('stBad'), r.ok?'ok':'bad'));
+  box.appendChild(stRow(t('stRowConv'),
+    (r.ok&&r.edge)?t('stYes'):t('stNo'), (r.ok&&r.edge)?'ok':'bad'));
+  box.appendChild(stRow(t('stRowGem'),
+    (r.ok&&r.keys>0)?t('stYes'):t('stNo'), (r.ok&&r.keys>0)?'ok':'bad'));
+  box.appendChild(stRow(t('stRowLat'),
+    r.ok?t('stMs',{ms:r.ms}):t('stFail'), r.ok?'ok':'bad'));
+  msg.className=r.ok?'ok':'bad';
+  msg.textContent=r.ok?t('stDone'):t('stDoneBad');
+  btn.disabled=false;
+}
+
+/* ================= splash ================= */
+function endSplash(){
+  const sp=$('splash');
+  if(!sp) return;
+  sp.classList.add('hide');
+  document.body.classList.remove('booting');
+  setTimeout(()=>{ try{ sp.remove(); }catch(e){} },520);
+}
+
+/* ================= wire up ================= */
+$('selLang').onchange=e=>{
+  state.lang=e.target.value; Store.set('lang',state.lang);
+  renderVoices(defaultVoice());
+};
+$('selModel').onchange=e=>{
+  state.model=e.target.value; Store.set('model',state.model);
+  renderVoices(defaultVoice());
+};
+$('selVoice').onchange=e=>{
+  state.voice=e.target.value; Store.set('voice',state.voice); voiceHint();
+};
+$('btnGo').onclick=convertAndPlay;
+$('btnStop').onclick=doStop;
+$('btnSave').onclick=doSave;
+$('histClear').onclick=()=>{ state.history=[]; Store.set('history',[]); renderHistory();
+  if(BR) BR.clearAudio(); setStatus(t('cleared'),'ok'); };
+$('hpPrev').onclick=()=>{ state.hpage--; renderHistory(); };
+$('hpNext').onclick=()=>{ state.hpage++; renderHistory(); };
+$('hpSize').onchange=e=>{ state.hsize=+e.target.value; Store.set('hsize',state.hsize); state.hpage=1; renderHistory(); };
+$('menuBtn').onclick=openDrawer;
+$('overlay').onclick=closeDrawer;
+$('dClose').onclick=closeDrawer;
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
+$('btnStCheck').onclick=checkStatus;
+$('lbFa').onclick=()=>{ UI='fa'; state.uilang='fa'; Store.set('uilang','fa'); applyUI(); };
+$('lbEn').onclick=()=>{ UI='en'; state.uilang='en'; Store.set('uilang','en'); applyUI(); };
+$('btnStop').disabled=true;
+applyUI();
+show('scrHome');
+document.querySelectorAll('.ditem,.dpill').forEach(b=>b.classList.toggle('on',b.dataset.go==='scrHome'));
+setTimeout(endSplash, 2050);
+</script>
+</body>
+</html>
