@@ -93,6 +93,8 @@ button:disabled{opacity:.55}
 .hitem .hmv button:disabled{opacity:.3}
 .hitem{background:var(--card);border-radius:12px;padding:10px 12px;margin-top:9px;cursor:pointer;
   display:flex;justify-content:space-between;gap:10px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.hitem{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.hitem.drag{position:relative;z-index:5;opacity:.96;box-shadow:0 8px 22px rgba(0,0,0,.28)}
 .hitem .hcol{flex:1;min-width:0}
 .hitem .ht{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hitem .hm{font-size:12px;color:var(--muted);direction:ltr;white-space:nowrap;
@@ -259,7 +261,7 @@ audio{width:100%;margin-top:14px;display:none}
   <div class="setList">
     <div class="me-row">
       <span class="lb" id="setVerLb">نسخه برنامه</span>
-      <span class="vl" id="setVer">1.0</span>
+      <span class="vl" id="setVer">1.1</span>
     </div>
   </div>
 </section>
@@ -296,7 +298,7 @@ audio{width:100%;margin-top:14px;display:none}
   <button class="ditem" data-go="scrStatus" id="dStatus">وضعیت سرویس</button>
   <button class="ditem" data-go="scrSettings" id="dSet">تنظیمات</button>
   <button class="ditem" data-go="scrAbout" id="dAbout">اطلاعات سازنده</button>
-  <div class="dfoot">Persian tts &middot; v1.0</div>
+  <div class="dfoot">Persian tts &middot; v1.1</div>
 </nav>
 
 <script src="voices-data.js"></script>
@@ -462,7 +464,7 @@ const MODELS=[
 ];
 /* app version - read from the native bridge when running inside the APK,
    so build.gradle stays the single source of truth (falls back to APP_VERSION) */
-const APP_VERSION='1.0';
+const APP_VERSION='1.1';
 function appVersion(){
   try{ const v=BR&&BR.appVersion?BR.appVersion():''; return v||APP_VERSION; }
   catch(e){ return APP_VERSION; }
@@ -997,6 +999,49 @@ function moveHistory(h,d){
   state.history.splice(i,1); state.history.splice(j,0,h);
   Store.set('history',state.history); renderHistory();
 }
+/* long-press an item, then drag it up/down to reorder (buttons still work).
+   ponytail: reorders inside the shown page only; the arrows cross pages. */
+function histDragInit(){
+  const box=$('histList'); let tm=null, sx=0, sy=0, dg=null;
+  const end=commit=>{
+    clearTimeout(tm); tm=null;
+    if(!dg) return false;
+    dg=null;
+    if(commit){
+      const items=[...box.children].map(c=>c._h).filter(Boolean);
+      state.history.splice((state.hpage-1)*state.hsize,items.length,...items);
+      Store.set('history',state.history);
+    }
+    renderHistory(); return true;
+  };
+  box.addEventListener('touchstart',e=>{
+    const it=e.target.closest('.hitem');
+    if(!it||e.target.closest('button')||e.touches.length!==1){ end(false); return; }
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+    clearTimeout(tm);
+    tm=setTimeout(()=>{ tm=null;
+      dg={it,off:sy-it.getBoundingClientRect().top}; it.classList.add('drag');
+      try{ navigator.vibrate&&navigator.vibrate(15); }catch(_){}
+    },350);
+  },{passive:true});
+  box.addEventListener('touchmove',e=>{
+    const p=e.touches[0];
+    if(tm&&(Math.abs(p.clientY-sy)>8||Math.abs(p.clientX-sx)>8)){ clearTimeout(tm); tm=null; } // a scroll, not a hold
+    if(!dg) return;
+    e.preventDefault();
+    const it=dg.it, y=p.clientY-dg.off, h=it.offsetHeight;
+    it.style.transform='';
+    const pv=it.previousElementSibling, nx=it.nextElementSibling;
+    if(pv&&y<pv.getBoundingClientRect().top+pv.offsetHeight/2) box.insertBefore(it,pv);
+    else if(nx&&y+h>nx.getBoundingClientRect().top+nx.offsetHeight/2) box.insertBefore(nx,it);
+    it.style.transform='translateY('+(y-it.getBoundingClientRect().top)+'px)';
+    // ponytail: edge scroll only advances while the finger moves; rAF loop if that feels sticky
+    if(p.clientY<70) window.scrollBy(0,-14); else if(p.clientY>window.innerHeight-70) window.scrollBy(0,14);
+  },{passive:false});
+  box.addEventListener('touchend',e=>{ if(end(true)) e.preventDefault(); }); // no tap-to-play after a drag
+  box.addEventListener('touchcancel',()=>end(false));
+  box.addEventListener('contextmenu',e=>e.preventDefault());
+}
 function renderHistory(){
   const box=$('histList'); box.innerHTML='';
   const all=state.history, sz=state.hsize, pages=Math.max(1,Math.ceil(all.length/sz));
@@ -1013,7 +1058,7 @@ function renderHistory(){
   const start=(state.hpage-1)*sz;
   all.slice(start,start+sz).forEach((h,k)=>{
     const gi=start+k;
-    const d=document.createElement('div'); d.className='hitem';
+    const d=document.createElement('div'); d.className='hitem'; d._h=h;
     const col=document.createElement('div'); col.className='hcol';
     const tx=document.createElement('div'); tx.className='ht'; tx.textContent=h.text;
     const m=document.createElement('div'); m.className='hm';
@@ -1221,6 +1266,7 @@ $('histClear').onclick=()=>{ state.history=[]; Store.set('history',[]); renderHi
   if(BR) BR.clearAudio(); setStatus(t('cleared'),'ok'); };
 $('hpPrev').onclick=()=>{ state.hpage--; renderHistory(); };
 $('hpNext').onclick=()=>{ state.hpage++; renderHistory(); };
+histDragInit();
 $('hpSize').onchange=e=>{ state.hsize=+e.target.value; Store.set('hsize',state.hsize); state.hpage=1; renderHistory(); };
 $('menuBtn').onclick=openDrawer;
 $('overlay').onclick=closeDrawer;

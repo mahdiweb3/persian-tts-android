@@ -2,6 +2,8 @@
 
 [فارسی](README.fa.md) · **English**
 
+**Version 1.1:** [Download the signed Android APK](https://github.com/mahdiweb3/persian-tts-android/releases/tag/v1.1). Hold a history item for about 0.35 seconds, drag it up or down, then release to save its position. Dragging works within the current page; ▲ ▼ also move items across pages.
+
 **Persian TTS** is a small, fast Android app that turns Persian (Farsi) text — or any other language — into natural-sounding speech. Type or paste your text, pick a voice, tap one button, and you get an MP3 or WAV file you can play, save and share. It runs on Gemini TTS voices and a free Edge TTS engine, keeps a paginated history of everything you generate, and ships with a full Persian and English interface.
 
 <p align="center">
@@ -84,7 +86,7 @@ Press **Save**. The file is written to `Downloads/PersianTTS` as MP3 (Edge) or W
 
 ### 7. Use the history
 
-Every result is added to **History**. Tap an item to play it again, press ✕ to delete it, or use ▲ ▼ to move it. Details in the [next section](#history-pages-page-size-and-reordering).
+Every result is added to **History**. Tap an item to play it again, press ✕ to delete it, or hold and drag it up or down to reorder it. The ▲ ▼ buttons still work. Details in the [next section](#history-pages-page-size-and-reordering).
 
 ### 8. Switch the interface language
 
@@ -110,6 +112,7 @@ All 30 Gemini voices (Achernar, Achird, Algenib, Aoede and others) are multiling
 | ‹ Page X of Y › | Move between pages; buttons disable on the first and last page |
 | Per-page dropdown | 10, 20, 50 or 100. Numbers use Persian digits in the Persian UI and Latin digits in English |
 | ▲ ▼ on each item | Moves the item one place; works across page boundaries |
+| Hold and drag (v1.1) | Hold for about 0.35 seconds, drag up or down, then release; reorders within the current page. A quick swipe still scrolls and a short tap still plays |
 | Persistence | Order and page size are remembered |
 | ✕ | Removes the item and its stored audio file |
 
